@@ -615,6 +615,8 @@ class ETL_ANALYSIS(ETL):
     def transform_dataset(self):
         logger.info("TD campagne : Flatten declared data...")
         self.df = flatten_declared_data(self.df)
+        self.df["nouvelle colonne A"] = 0
+        self.df["nouvelle colonne B"] = 0
 
     def load_dataset(self):
         """
