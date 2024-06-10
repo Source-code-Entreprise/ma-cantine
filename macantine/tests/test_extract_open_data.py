@@ -86,7 +86,9 @@ class TestETLAnalysis(TestCase):
         etl = ETL_ANALYSIS()
         etl.df = pd.DataFrame.from_dict(td, orient="index").T
         etl.transform_dataset()
+
         self.assertEqual(len(etl.get_dataset().columns), len(schema_cols), "The columns should match the schema")
+        self.assertEqual(set(etl.get_dataset().columns), set(schema_cols))
 
 
 @requests_mock.Mocker()

@@ -1,0 +1,178 @@
+{
+  "encoding": "utf-8",
+  "fields": [
+    {
+      "name": "id",
+      "type": "integer"
+    },
+    {
+      "name": "canteen_id",
+      "type": "string"
+    },
+    {
+      "name": "creation_date",
+      "type": "string"
+    },
+    {
+      "name": "year",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+      "name": "siret",
+      "type": "integer"
+    },
+    {
+      "name": "daily_meal_count",
+      "type": "string"
+    },
+    {
+      "name": "yearly_meal_count",
+      "type": "string"
+    },
+    {
+      "name": "management_type",
+      "type": "string"
+    },
+    {
+      "name": "production_type",
+      "type": "string"
+    },
+    {
+      "name": "cuisine_centrale",
+      "type": "string"
+    },
+    {
+      "name": "central_producer_siret",
+      "type": "integer"
+    },
+    {
+      "name": "diagnostic_type",
+      "type": "string"
+    },
+    {
+      "name": "modele_economique",
+      "type": "string"
+    },
+    {
+      "name": "secteur",
+      "type": "string"
+    },
+    {
+      "name": "catégorie",
+      "type": "string"
+    },
+    {
+      "name": "satellite_canteens_count",
+      "type": "integer"
+    },
+    {
+      "name": "value_total_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_bio_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_egalim_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_sustainable_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_externality_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_egalim_others_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_meat_poultry_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_fish_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_meat_poultry_egalim_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_fish_egalim_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_meat_poultry_france_ht",
+      "type": "string"
+    },
+    {
+      "name": "value_fish_france_ht",
+      "type": "any"
+    },
+    {
+      "name": "lib_departments",
+      "type": "string"
+    },
+    {
+      "name": "region",
+      "type": "integer"
+    },
+    {
+      "name": "lib_region",
+      "type": "string"
+    },
+    {
+      "name": "line_ministry",
+      "type": "string"
+    },
+    {
+      "name": "secteur_spe",
+      "type": "string"
+    },
+    {
+      "name": "email",
+      "type": "string"
+    },
+    {
+      "name": "vegetarian_weekly_recurrence",
+      "type": "string"
+    },
+    {
+      "name": "vegetarian_menu_type",
+      "type": "string"
+    },
+    {
+      "name": "ratio_egalim_fish",
+      "type": "string"
+    },
+    {
+      "name": "ratio_egalim_meat_poultry",
+      "type": "string"
+    },
+    {
+      "name": "ratio_bio",
+      "type": "string"
+    },
+    {
+      "name": "ratio_egalim",
+      "type": "string"
+    },
+    {
+      "name": "satellites",
+      "type": "array"
+    }
+  ],
+  "format": "csv",
+  "mediatype": "text/csv",
+  "scheme": "file",
+  "title": "Schéma du modèle de données d'analyse",
+  "type": "table"
+}
