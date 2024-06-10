@@ -134,6 +134,16 @@ def fetch_teledeclarations(years: list) -> pd.DataFrame:
     return df
 
 
+def flatten_declared_data(df):
+    """
+    Create a column for each key of the declared_data json column
+    """
+    df = df.reset_index()
+    tmp_df = pd.json_normalize(df["declared_data"])
+    df = pd.concat([df.drop("declared_data", axis=1), tmp_df], axis=1)
+    return df
+
+
 def fetch_commune_detail(code_insee_commune, commune_details, geo_detail_type="epci"):
     """
     Provide EPCI code/ Department code/ Region code for a city, given the insee code of the city
@@ -237,6 +247,12 @@ class ETL(ABC):
     Interface for the different ETL
     """
 
+    def __init__(self):
+        self.df = None
+        self.schema = None
+        self.schema_url = ""
+        self.dataset_name = ""
+
     @abstractmethod
     def extract_dataset(self):
         pass
@@ -249,14 +265,35 @@ class ETL(ABC):
     def load_dataset(self):
         pass
 
+    def get_dataset(self):
+        return self.df
+
+    def len_dataset(self):
+        if isinstance(self.df, pd.DataFrame):
+            return len(self.df)
+        else:
+            return 0
+
+    def get_schema(self):
+        return self.schema
+
+    def is_valid(self) -> bool:
+        dataset_to_validate_url = f"{os.environ['CELLAR_HOST']}/{os.environ['CELLAR_BUCKET_NAME']}/media/open_data/{self.dataset_name}_to_validate.csv"
+
+        res = requests.get(
+            f"https://api.validata.etalab.studio/validate?schema={self.schema_url}&url={dataset_to_validate_url}&header_case=true"
+        )
+        report = json.loads(res.text)["report"]
+        if len(report["errors"]) > 0 or report["stats"]["errors"] > 0:
+            logger.error(f"The dataset {self.dataset_name} extraction has errors : ")
+            logger.error(report["errors"])
+            logger.error(report["tasks"])
+            return 0
+        else:
+            return 1
+
 
 class ETL_OPEN_DATA(ETL):
-
-    def __init__(self):
-        self.df = None
-        self.schema = None
-        self.schema_url = ""
-        self.dataset_name = ""
 
     def _fill_geo_names(self, geo_zoom="department"):
         """
@@ -332,33 +369,6 @@ class ETL_OPEN_DATA(ETL):
 
         return self.df.merge(canteens_sectors, on="id")
 
-    def get_schema(self):
-        return self.schema
-
-    def get_dataset(self):
-        return self.df
-
-    def len_dataset(self):
-        if isinstance(self.df, pd.DataFrame):
-            return len(self.df)
-        else:
-            return 0
-
-    def is_valid(self) -> bool:
-        dataset_to_validate_url = f"{os.environ['CELLAR_HOST']}/{os.environ['CELLAR_BUCKET_NAME']}/media/open_data/{self.dataset_name}_to_validate.csv"
-
-        res = requests.get(
-            f"https://api.validata.etalab.studio/validate?schema={self.schema_url}&url={dataset_to_validate_url}&header_case=true"
-        )
-        report = json.loads(res.text)["report"]
-        if len(report["errors"]) > 0 or report["stats"]["errors"] > 0:
-            logger.error(f"The dataset {self.dataset_name} extraction has errors : ")
-            logger.error(report["errors"])
-            logger.error(report["tasks"])
-            return 0
-        else:
-            return 1
-
     def load_dataset(self):
         self._load_dataset(stage="to_validate")
         if os.environ["DEFAULT_FILE_STORAGE"] == "storages.backends.s3boto3.S3Boto3Storage":
@@ -403,6 +413,7 @@ class ETL_OPEN_DATA(ETL):
 
 
 class ETL_CANTEEN(ETL_OPEN_DATA):
+
     def __init__(self):
         super().__init__()
         self.dataset_name = "registre_cantines"
@@ -519,7 +530,7 @@ class ETL_TD(ETL_OPEN_DATA):
 
     def transform_dataset(self):
         logger.info("TD campagne : Flatten declared data...")
-        self.df = self._flatten_declared_data()
+        self.df = flatten_declared_data(self.df)
 
         logger.info("TD campagne : Aggregate appro data for complete TD...")
         self._aggregate_complete_td()
@@ -549,11 +560,6 @@ class ETL_TD(ETL_OPEN_DATA):
         self.df["canteen_sectors"] = self.transform_sectors()
         logger.info("TD Campagne : Fill geo name...")
         self.transform_geo_data(geo_col_names=["canteen_department", "canteen_region"])
-
-    def _flatten_declared_data(self):
-        tmp_df = pd.json_normalize(self.df["declared_data"])
-        self.df = pd.concat([self.df.drop("declared_data", axis=1), tmp_df], axis=1)
-        return self.df
 
     def _aggregation_col(self, categ="bio", sub_categ=["_bio"]):
         pattern = "|".join(sub_categ)
@@ -595,15 +601,20 @@ class ETL_ANALYSIS(ETL):
     """
 
     def __init__(self):
-        self.df = None
+        super().__init__()
+        self.dataset_name = "analysis"
+        self.schema = json.load(open("data/schemas/schema_analysis.json"))
+        self.schema_url = (
+            "https://raw.githubusercontent.com/betagouv/ma-cantine/staging/data/schemas/schema_analysis.json"
+        )
         self.years = [2021, 2022, 2023]
 
     def extract_dataset(self):
         self.df = fetch_teledeclarations(self.years)
-        print("self")
 
     def transform_dataset(self):
-        pass
+        logger.info("TD campagne : Flatten declared data...")
+        self.df = flatten_declared_data(self.df)
 
     def load_dataset(self):
         """

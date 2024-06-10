@@ -36,6 +36,58 @@ class TestETLAnalysis(TestCase):
             "There should be two teledeclaration. None for 1990 (no campaign). One for 2022 and one for 2023",
         )
 
+    def test_transform_teledeclaration(self):
+        schema = json.load(open("data/schemas/schema_analysis.json"))
+        schema_cols = [i["name"] for i in schema["fields"]]
+
+        td = {
+            "id": 323,
+            "declared_data": {
+                "canteen": {"name": "Cantine de Misson", "siret": "", "city_insee_code": "40186"},
+                "year": 2021,
+                "version": 3,
+                "applicant": {"name": "Applicant", "email": "cantine@mail.com"},
+                "teledeclaration": {
+                    "value_bio_ht": 25.0,
+                    "value_fish_ht": None,
+                    "has_waste_plan": False,
+                    "value_total_ht": 100.0,
+                    "diagnostic_type": "SIMPLE",
+                    "has_waste_measures": False,
+                    "has_waste_diagnostic": False,
+                    "value_fish_egalim_ht": None,
+                    "value_sustainable_ht": 5.0,
+                    "value_meat_poultry_ht": None,
+                    "has_donation_agreement": None,
+                    "value_egalim_others_ht": None,
+                    "has_diversification_plan": None,
+                    "communicates_on_food_plan": True,
+                    "cooking_plastic_substituted": True,
+                    "plastic_bottles_substituted": True,
+                    "serving_plastic_substituted": True,
+                    "communicates_on_food_quality": True,
+                    "value_meat_poultry_egalim_ht": None,
+                    "value_meat_poultry_france_ht": None,
+                    "plastic_tableware_substituted": True,
+                    "value_externality_performance_ht": None,
+                },
+            },
+            "creation_date": pd.Timestamp("2022-07-28 12:05:43.217015+0000", tz="UTC"),
+            "modification_date": pd.Timestamp("2022-07-28 12:05:43.217054+0000", tz="UTC"),
+            "year": 2021,
+            "canteen_siret": "",
+            "status": "SUBMITTED",
+            "applicant_id": 1,
+            "canteen_id": 1,
+            "diagnostic_id": 2,
+            "teledeclaration_mode": None,
+        }
+
+        etl = ETL_ANALYSIS()
+        etl.df = pd.DataFrame.from_dict(td, orient="index").T
+        etl.transform_dataset()
+        self.assertEqual(len(etl.get_dataset().columns), len(schema_cols), "The columns should match the schema")
+
 
 @requests_mock.Mocker()
 class TestETLOpenData(TestCase):
