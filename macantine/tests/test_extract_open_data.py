@@ -43,7 +43,23 @@ class TestETLAnalysis(TestCase):
         td = {
             "id": 323,
             "declared_data": {
-                "canteen": {"name": "Cantine de Misson", "siret": "", "city_insee_code": "40186"},
+                "canteen": {
+                    "id": "10",
+                    "name": "Cantine de Misson",
+                    "siret": "2452212228555",
+                    "region": "10",
+                    "department": "38",
+                    "sectors": [],
+                    "line_ministry": None,
+                    "economic_model": "public",
+                    "city_insee_code": "40186",
+                    "management_type": "direct",
+                    "production_type": "site",
+                    "daily_meal_count": "10",
+                    "yearly_meal_count": "100",
+                    "central_producer_siret": None,
+                    "satellite_canteens_count": None,
+                },
                 "year": 2021,
                 "version": 3,
                 "applicant": {"name": "Applicant", "email": "cantine@mail.com"},
@@ -70,6 +86,8 @@ class TestETLAnalysis(TestCase):
                     "value_meat_poultry_france_ht": None,
                     "plastic_tableware_substituted": True,
                     "value_externality_performance_ht": None,
+                    "vegetarian_menu_type": None,
+                    "vegetarian_weekly_recurrence": None,
                 },
             },
             "creation_date": pd.Timestamp("2022-07-28 12:05:43.217015+0000", tz="UTC"),
@@ -81,6 +99,7 @@ class TestETLAnalysis(TestCase):
             "canteen_id": 1,
             "diagnostic_id": 2,
             "teledeclaration_mode": None,
+            "satellites": [],
         }
 
         etl = ETL_ANALYSIS()

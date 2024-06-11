@@ -36,6 +36,24 @@ CAMPAIGN_DATES = {
     },
 }
 
+CATEGORIES_TO_AGGREGATE = {
+    "bio": ["_bio"],
+    "sustainable": ["_sustainable", "_label_rouge", "_aocaop_igp_stg"],
+    "egalim_others": [
+        "_egalim_others",
+        "_hve",
+        "_peche_durable",
+        "_rup",
+        "_fermier",
+        "_commerce_equitable",
+    ],
+    "externality_performance": [
+        "_externality_performance",
+        "_performance",
+        "_externalites",
+    ],
+}
+
 
 def map_communes_infos():
     """
@@ -141,6 +159,23 @@ def flatten_declared_data(df):
     df = df.reset_index()
     tmp_df = pd.json_normalize(df["declared_data"])
     df = pd.concat([df.drop("declared_data", axis=1), tmp_df], axis=1)
+    return df
+
+
+def _aggregation_col(df, categ="bio", sub_categ=["_bio"]):
+    pattern = "|".join(sub_categ)
+    df[f"teledeclaration.value_{categ}_ht"] = df.filter(regex=pattern).sum(
+        axis=1, numeric_only=True, skipna=True, min_count=1
+    )
+    return df
+
+
+def aggregate_complete_td(df):
+    """
+    Aggregate the columns of a complete TD for an appro category if the total value of this category is not specified.
+    """
+    for categ, elements_in_categ in CATEGORIES_TO_AGGREGATE.items():
+        df = _aggregation_col(df, categ, elements_in_categ)
     return df
 
 
@@ -498,24 +533,6 @@ class ETL_TD(ETL_OPEN_DATA):
         self.schema_url = (
             "https://raw.githubusercontent.com/betagouv/ma-cantine/staging/data/schemas/schema_teledeclaration.json"
         )
-
-        self.categories_to_aggregate = {
-            "bio": ["_bio"],
-            "sustainable": ["_sustainable", "_label_rouge", "_aocaop_igp_stg"],
-            "egalim_others": [
-                "_egalim_others",
-                "_hve",
-                "_peche_durable",
-                "_rup",
-                "_fermier",
-                "_commerce_equitable",
-            ],
-            "externality_performance": [
-                "_externality_performance",
-                "_performance",
-                "_externalites",
-            ],
-        }
         self.df = None
 
     def extract_dataset(self):
@@ -533,7 +550,7 @@ class ETL_TD(ETL_OPEN_DATA):
         self.df = flatten_declared_data(self.df)
 
         logger.info("TD campagne : Aggregate appro data for complete TD...")
-        self._aggregate_complete_td()
+        self.df = aggregate_complete_td(self.df)
 
         self.df["teledeclaration_ratio_bio"] = (
             self.df["teledeclaration.value_bio_ht"] / self.df["teledeclaration.value_total_ht"]
@@ -560,19 +577,6 @@ class ETL_TD(ETL_OPEN_DATA):
         self.df["canteen_sectors"] = self.transform_sectors()
         logger.info("TD Campagne : Fill geo name...")
         self.transform_geo_data(geo_col_names=["canteen_department", "canteen_region"])
-
-    def _aggregation_col(self, categ="bio", sub_categ=["_bio"]):
-        pattern = "|".join(sub_categ)
-        self.df[f"teledeclaration.value_{categ}_ht"] = self.df.filter(regex=pattern).sum(
-            axis=1, numeric_only=True, skipna=True, min_count=1
-        )
-
-    def _aggregate_complete_td(self):
-        """
-        Aggregate the columns of a complete TD for an appro category if the total value of this category is not specified.
-        """
-        for categ, elements_in_categ in self.categories_to_aggregate.items():
-            self._aggregation_col(categ, elements_in_categ)
 
     def _filter_null_values(self):
         "We have decided not take into accounts the TD where the value total or the value bio are null"
@@ -615,11 +619,40 @@ class ETL_ANALYSIS(ETL):
     def transform_dataset(self):
         logger.info("TD campagne : Flatten declared data...")
         self.df = flatten_declared_data(self.df)
-        self.df["nouvelle colonne A"] = 0
-        self.df["nouvelle colonne B"] = 0
+
+        logger.info("TD campagne : Aggregate appro data for complete TD...")
+        self.df = aggregate_complete_td(self.df)
+
+        self.df["cuisine_centrale"] = 0
+        self.df["modele_economique"] = 0
+        self.df["secteur"] = 0
+        self.df["catégorie"] = 0
+        self.df["value_egalim_ht"] = 0
+        self.df["value_externality_ht"] = 0
+        self.df["value_fish_france_ht"] = 0
+        self.df["lib_departments"] = 0
+        self.df["lib_region"] = 0
+        self.df["secteur_spe"] = 0
+        self.df["ratio_egalim_fish"] = 0
+        self.df["ratio_egalim_meat_poultry"] = 0
+        self.df["ratio_bio"] = 0
+        self.df["ratio_egalim"] = 0
+
+        self._clean_dataset()
 
     def load_dataset(self):
         """
         Load in database
         """
         pass
+
+    def _clean_dataset(self):
+        columns_mapping = {}
+        for col in self.df.columns:
+            columns_mapping[col] = (
+                col.replace("teledeclaration.", "").replace("canteen.", "").replace("applicant.", "")
+            )
+        self.df = self.df.rename(columns=columns_mapping)
+
+        self.df = self.df[[i["name"] for i in self.schema["fields"]]]
+        self.df = self.df.loc[:, ~self.df.columns.duplicated()]
