@@ -17,6 +17,7 @@ from api.serializers import SectorSerializer
 from api.views.utils import camelize
 from django.core.files.storage import default_storage
 from django.db.models import Q
+from sqlalchemy import create_engine
 
 logger = logging.getLogger(__name__)
 
@@ -644,7 +645,15 @@ class ETL_ANALYSIS(ETL):
         """
         Load in database
         """
-        pass
+        try:
+            engine = create_engine(
+                f"postgresql+psycopg2://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
+                echo=False,
+            )
+            self.df.to_sql(name=self.dataset_name, con=engine)
+        except Exception as e:
+            logger.error("Could not load into database")
+            logger.error(e)
 
     def _clean_dataset(self):
         columns_mapping = {}
@@ -653,6 +662,9 @@ class ETL_ANALYSIS(ETL):
                 col.replace("teledeclaration.", "").replace("canteen.", "").replace("applicant.", "")
             )
         self.df = self.df.rename(columns=columns_mapping)
+
+        if "satellites" not in self.df.columns:
+            self.df["satellites"] = 0
 
         self.df = self.df[[i["name"] for i in self.schema["fields"]]]
         self.df = self.df.loc[:, ~self.df.columns.duplicated()]

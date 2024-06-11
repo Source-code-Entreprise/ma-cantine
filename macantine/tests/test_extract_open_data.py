@@ -5,9 +5,11 @@ from macantine.etl import map_communes_infos, update_datagouv_resources
 from data.factories import DiagnosticFactory, CanteenFactory, UserFactory, SectorFactory
 from data.models import Teledeclaration
 from macantine.etl import ETL_CANTEEN, ETL_TD, ETL_ANALYSIS
+from sqlalchemy import create_engine
 from freezegun import freeze_time
 import json
 import os
+import dotenv
 
 
 class TestETLAnalysis(TestCase):
@@ -108,6 +110,26 @@ class TestETLAnalysis(TestCase):
 
         self.assertEqual(len(etl.get_dataset().columns), len(schema_cols), "The columns should match the schema")
         self.assertEqual(set(etl.get_dataset().columns), set(schema_cols))
+
+    def test_load_teledeclaration(self):
+        canteen = CanteenFactory.create()
+        applicant = UserFactory.create()
+        with freeze_time("2023-05-14"):  # Faking time to mock creation_date
+            diagnostic_2022 = DiagnosticFactory.create(canteen=canteen, year=2022, diagnostic_type=None)
+            _ = Teledeclaration.create_from_diagnostic(diagnostic_2022, applicant)
+
+        etl = ETL_ANALYSIS()
+        etl.extract_dataset()
+        etl.transform_dataset()
+        etl.load_dataset()
+
+        dotenv.load_dotenv()
+        engine = create_engine(
+            f"postgresql+psycopg2://{os.environ.get('DB_USER')}:{os.environ.get('DB_PASSWORD')}@{os.environ.get('DB_HOST')}:{os.environ.get('DB_PORT')}/{os.environ.get('DB_NAME')}",
+            echo=False,
+        )
+        df = pd.read_sql(sql=etl.dataset_name, con=engine)
+        self.assertEqual(len(df), 1, "There should be one teledeclaration")
 
 
 @requests_mock.Mocker()
