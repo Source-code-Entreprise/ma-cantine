@@ -15,7 +15,7 @@
     "@gouvminint/vue-dsfr": "^5.18.1",
     "django-vite-plugin": "^4.0.1",
     "pinia": "^2.1.7",
-    "vue": "^3.4.29",
+    "vue": "^3.4.33",
     "vue-router": "^4.3.3"
   },
   "devDependencies": {
