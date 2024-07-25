@@ -15,3 +15,8 @@ NODE_OPTIONS=--openssl-legacy-provider npm install
 NODE_OPTIONS=--openssl-legacy-provider npm run serve
 
 NODE_OPTIONS=--openssl-legacy-provider npm run build --if-present
+
+
+
+Une fois la compilation finie des deux côtés, l'application se trouvera sous 127.0.0.1:8000 (le port Django, non pas celui de npm).
+https://8080-sourcecodeent-macantine-65ay5qejdg9.ws-eu115.gitpod.io/
