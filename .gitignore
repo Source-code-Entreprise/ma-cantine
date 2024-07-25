@@ -175,3 +175,7 @@ notes/
 # 2024 Frontend
 .vite/
 .hotfile
+
+
+djangoenv
+frontend/package-lock.json

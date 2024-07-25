@@ -1,0 +1,17 @@
+Environment details
+
+Run actions/setup-python@v1
+  with:
+    python-version: 3.11
+    architecture: x64
+
+  node: v20.15.1
+  npm: 10.7.0
+  yarn: 1.22.22
+  
+  
+NODE_OPTIONS=--openssl-legacy-provider npm install 
+
+NODE_OPTIONS=--openssl-legacy-provider npm run serve
+
+NODE_OPTIONS=--openssl-legacy-provider npm run build --if-present
