@@ -4,8 +4,10 @@ on:
   push:
     branches:
       - staging
+      - my-staging
       - main
       - "dependabot/**"
+  workflow_dispatch:    
 
 jobs:
   dependabot-frontend-build:

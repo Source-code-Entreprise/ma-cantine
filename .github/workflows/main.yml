@@ -1,6 +1,6 @@
 name: Ma Cantine CI
 
-on: [push]
+on: [push,workflow_dispatch]
 
 jobs:
   backend:
